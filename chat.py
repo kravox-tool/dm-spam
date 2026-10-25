@@ -110,7 +110,7 @@ def _envolver(texto, ancho):
 def _carpeta_media():
     destino = "/sdcard/Download/Chat_Media/"
     if not os.path.isdir("/sdcard/Download"):
-        destino = os.path.join(BASE_DIR, "Hexvox_Media")
+        destino = os.path.join(BASE_DIR, "Chat_Media")
     os.makedirs(destino, exist_ok=True)
     return destino
 
