@@ -50,7 +50,7 @@ def dibujar():
         print(linea)
     print(RESET, end="")
     print(f"{RED}{'=' * ANCHO}{RESET}")
-    print(f"{WHITE}{BOLD}{'TERMUX CONTROL PANEL'.center(ANCHO)}{RESET}")
+    print(f"{WHITE}{BOLD}{'TERMUX PANEL'.center(ANCHO)}{RESET}")
     print(f"{RED}{'=' * ANCHO}{RESET}\n")
     for tecla, nombre, desc in OPCIONES:
         print(f"  {RED}{BOLD}[{tecla}]{RESET} {GREEN}{nombre:<9}{RESET} {GRAY}{desc}{RESET}")
@@ -96,7 +96,7 @@ def main():
         if opcion == "1":
             lanzar("spam_bot.py")
         elif opcion == "2":
-            lanzar("hexvox.py")
+            lanzar("chat.py")
         elif opcion == "3":
             pantalla_info()
         elif opcion in ("0", "q", "salir", "exit"):
