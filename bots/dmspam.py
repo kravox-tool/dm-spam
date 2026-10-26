@@ -40,7 +40,7 @@ async def ejecutar_ataque_id(target_id, ctx=None):
         return
 
     print(f"\n{core.RED}{core.BOLD}{core.SEP}")
-    print(f"[>] OBJETIVO: {target_user.name.upper()} ({target_user.id})")
+    print(f"{core.neon('[>] OBJETIVO: ' + target_user.name.upper() + ' (' + str(target_user.id) + ')')}")
     print(f"{core.SEP}{core.RESET}")
 
     if ctx:
@@ -53,15 +53,20 @@ async def ejecutar_ataque_id(target_id, ctx=None):
             await target_user.send(content=bot.mensaje_ataque)
             enviados += 1
             print(f"{core.GREEN}[+] [{enviados}/{bot.cantidad_mensajes}] Enviado exitosamente.{core.RESET}")
-            await asyncio.sleep(0.0)
+            await asyncio.sleep(0.7)
         except discord.errors.Forbidden:
             print(f"\n{core.RED}{core.BOLD}[X] CANCELADO: bloqueo al bot o DMs cerrados.{core.RESET}")
             break
+        except discord.errors.HTTPException as e:
+            if e.status == 429:
+                await asyncio.sleep(float(getattr(e, "retry_after", 2)) + 0.5)
+                enviados += 1
+                continue
         except Exception:
             pass
 
     print(f"\n{core.GREEN}{core.BOLD}{core.SEP}")
-    print(f"[OK] RAFAGA FINALIZADA. TOTAL ENVIADOS: {enviados}")
+    print(f"{core.neon('[OK] RAFAGA FINALIZADA. TOTAL ENVIADOS: ' + str(enviados))}")
     print(f"{core.SEP}{core.RESET}")
 
     if ctx:
@@ -92,16 +97,16 @@ async def idnuke_command(ctx, target_id: int):
 def main():
     core.pantalla("DM-SPAM :: RAFAGA A UNA ID")
 
-    print(f"{core.BLUE}{core.BOLD}[ CONFIGURACION DE CONEXION ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DE CONEXION ]")
     token = core.pedir("Coloca el token del bot")
 
-    print(f"\n{core.BLUE}{core.BOLD}[ CONFIGURACION DEL OBJETIVO ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DEL OBJETIVO ]")
     bot.target_id_consola = core.pedir_int("Coloca la ID del usuario a atacar")
 
-    print(f"\n{core.BLUE}{core.BOLD}[ CONFIGURACION DEL MENSAJE ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DEL MENSAJE ]")
     bot.mensaje_ataque = core.pedir("Escribe tu mensaje personalizado", permitir_salir=False)
 
-    print(f"\n{core.BLUE}{core.BOLD}[ CONFIGURACION DE CANTIDAD ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DE CANTIDAD ]")
     bot.cantidad_mensajes = core.pedir_int("Cuantos mensajes enviar? (ENTER = 50)", defecto=50)
 
     print(f"\n{core.YELLOW}{core.BOLD}{core.SEP}")
