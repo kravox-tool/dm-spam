@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 DM-SPAM :: Termux Panel
-Lanzador principal con interfaz neon roja.
+Lanzador principal con interfaz neon roja y prompts multicolor.
 """
 
 import os
@@ -11,14 +11,18 @@ import time
 import subprocess
 
 # ---------- Paleta ANSI ----------
-RED    = "\033[1;31m"
-GREEN  = "\033[1;32m"
-YELLOW = "\033[1;33m"
-CYAN   = "\033[1;36m"
-WHITE  = "\033[1;37m"
-GRAY   = "\033[0;90m"
-BOLD   = "\033[1m"
-RESET  = "\033[0m"
+RED     = "\033[1;31m"
+GREEN   = "\033[1;32m"
+YELLOW  = "\033[1;33m"
+BLUE    = "\033[1;34m"
+MAGENTA = "\033[1;35m"
+CYAN    = "\033[1;36m"
+WHITE   = "\033[1;37m"
+GRAY    = "\033[0;90m"
+BOLD    = "\033[1m"
+RESET   = "\033[0m"
+
+NEON = [RED, MAGENTA, YELLOW, GREEN, CYAN, BLUE]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BOTS_DIR = os.path.join(BASE_DIR, "bots")
@@ -32,6 +36,18 @@ BANNER_LINES = [
     "██████╔╝██║ ╚═╝ ██║      ███████║██║     ██║  ██║██║ ╚═╝ ██║",
     "╚═════╝ ╚═╝     ╚═╝      ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝",
 ]
+
+
+def neon(texto):
+    """Pinta el texto caracter por caracter con la paleta neon."""
+    if not texto:
+        return ""
+    piezas = []
+    for i, ch in enumerate(texto):
+        piezas.append(NEON[i % len(NEON)])
+        piezas.append(ch)
+    piezas.append(RESET)
+    return "".join(piezas)
 
 
 def limpiar():
@@ -48,7 +64,7 @@ def banner():
 def barra(texto=""):
     print(f"{RED}{BOLD}" + "=" * ANCHO + f"{RESET}")
     if texto:
-        print(f"{WHITE}{BOLD}" + texto.center(ANCHO) + f"{RESET}")
+        print(neon(texto.center(ANCHO)))
         print(f"{RED}{BOLD}" + "=" * ANCHO + f"{RESET}")
 
 
@@ -130,7 +146,7 @@ def main():
     while True:
         encabezado()
         menu()
-        opcion = input(f"{GREEN}-> Elige una opcion: {RESET}").strip()
+        opcion = input(f"{neon('-> ')}{neon('Elige una opcion')}{neon(': ')}").strip()
 
         if opcion == "1":
             lanzar_script("dmspam.py")
