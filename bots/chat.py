@@ -2,16 +2,18 @@
 # -*- coding: utf-8 -*-
 """
 CHAT :: Chat en vivo por consola con una ID.
+Descarga multimedia, guarda historial y permite salir al panel en cualquier momento.
 """
 
 import asyncio
 import os
 import sys
 import json
+import urllib.request
+
 import discord
 from discord.ext import commands
 import discord.errors
-import urllib.request
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
@@ -43,6 +45,15 @@ bot.target_user_obj = None
 HISTORIAL_FILE = "historial_chats.json"
 CARPETA_MEDIA = "/sdcard/Download/Chat_Media/"
 
+BANNER_LINES = [
+    "██████╗ ███╗   ███╗      ███████╗██████╗  █████╗ ███╗   ███╗",
+    "██╔══██╗████╗ ████║      ██╔════╝██╔══██╗██╔══██╗████╗ ████║",
+    "██║  ██║██╔████╔██║█████╗███████╗██████╔╝███████║██╔████╔██║",
+    "██║  ██║██║╚██╔╝██║╚════╝╚════██║██╔═══╝ ██╔══██║██║╚██╔╝██║",
+    "██████╔╝██║ ╚═╝ ██║      ███████║██║     ██║  ██║██║ ╚═╝ ██║",
+    "╚═════╝ ╚═╝     ╚═╝      ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝",
+]
+
 
 def clear_screen():
     os.system('clear')
@@ -50,12 +61,8 @@ def clear_screen():
 
 def banner():
     print_formatted_text(ANSI(f"{RED}{BOLD}"))
-    print_formatted_text(ANSI("██████╗ ███╗   ███╗      ███████╗██████╗  █████╗ ███╗   ███╗"))
-    print_formatted_text(ANSI("██╔══██╗████╗ ████║      ██╔════╝██╔══██╗██╔══██╗████╗ ████║"))
-    print_formatted_text(ANSI("██║  ██║██╔████╔██║█████╗███████╗██████╔╝███████║██╔████╔██║"))
-    print_formatted_text(ANSI("██║  ██║██║╚██╔╝██║╚════╝╚════██║██╔═══╝ ██╔══██║██║╚██╔╝██║"))
-    print_formatted_text(ANSI("██████╔╝██║ ╚═╝ ██║      ███████║██║     ██║  ██║██║ ╚═╝ ██║"))
-    print_formatted_text(ANSI("╚═════╝ ╚═╝     ╚═╝      ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝"))
+    for linea in BANNER_LINES:
+        print_formatted_text(ANSI(linea))
     print_formatted_text(ANSI(f"{RESET}"))
 
 
@@ -64,7 +71,7 @@ def enter_chat_layout():
     print_formatted_text(ANSI(f"{CYAN}╔════════════════════════════════════════════════════════════╗{RESET}"))
     print_formatted_text(ANSI(f"{CYAN}║ {WHITE}CHAT EN VIVO: {GREEN}{bot.target_user_obj.name.upper()}{RESET}"))
     print_formatted_text(ANSI(f"{CYAN}║ {WHITE}ID OBJETIVO:  {YELLOW}{bot.target_user_obj.id}{RESET}"))
-    print_formatted_text(ANSI(f"{CYAN}║ {GRAY}Comando para salir: /salir{RESET}"))
+    print_formatted_text(ANSI(f"{CYAN}║ {GRAY}Comando para salir: /salir  (o escribe: salir){RESET}"))
     print_formatted_text(ANSI(f"{CYAN}╚════════════════════════════════════════════════════════════╝{RESET}\n"))
 
 
@@ -142,8 +149,8 @@ async def terminal_input_loop():
                 if not user_input:
                     continue
 
-                if user_input == "/salir":
-                    print_formatted_text(ANSI(f"\n{RED}[-] Cerrando la terminal limpiamente...{RESET}"))
+                if user_input.lower() in ("/salir", "salir", "exit", "0"):
+                    print_formatted_text(ANSI(f"\n{RED}[-] Volviendo al panel...{RESET}"))
                     await bot.close()
                     os._exit(0)
 
@@ -254,11 +261,13 @@ def main():
         clear_screen()
 
     print_formatted_text(ANSI(f"\n{YELLOW}[*] Conectando con los servidores de Discord...{RESET}"))
+    print_formatted_text(ANSI(f"{GRAY}[*] Escribe 'salir' en cualquier momento para volver al panel.{RESET}"))
 
     try:
         bot.run(token)
     except discord.errors.LoginFailure:
         print_formatted_text(ANSI(f"\n{RED}[X] ERROR: Token de Discord invalido o vencido.{RESET}"))
+        input(f"{GRAY}ENTER para volver al panel...{RESET}")
     except KeyboardInterrupt:
         print_formatted_text(ANSI(f"\n{RED}[-] Script detenido por el usuario.{RESET}"))
 
