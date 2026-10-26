@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-DM-SPAM :: Termux Panel
-Lanzador principal, interfaz 100% roja.
-"""
-
-import os
 import sys
 import time
 import subprocess
