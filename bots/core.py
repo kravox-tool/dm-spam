@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 Nucleo compartido del panel DM-SPAM.
-Colores ANSI, banner, salida limpia al panel y utilidades comunes.
+Colores ANSI, banner, salida limpia al panel, prompts neon y utilidades.
 """
 
 import asyncio
 import os
 import sys
+
+import discord
 
 RED     = "\033[1;31m"
 GREEN   = "\033[1;32m"
@@ -32,9 +34,29 @@ BANNER_LINES = [
     "╚═════╝ ╚═╝     ╚═╝      ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝",
 ]
 
+# Paleta neon para textos de pregunta (multicolor)
+NEON = [RED, MAGENTA, YELLOW, GREEN, CYAN, BLUE]
+
 # Palabras que devuelven al panel
 SALIR_TOKENS = {"salir", "exit", "quit", "0", "/salir", "q", "volver"}
 SALIR_PEDIR = {"salir", "exit", "volver"}
+
+
+def neon(texto):
+    """Pinta el texto caracter por caracter con la paleta neon."""
+    if not texto:
+        return ""
+    piezas = []
+    for i, ch in enumerate(texto):
+        piezas.append(NEON[i % len(NEON)])
+        piezas.append(ch)
+    piezas.append(RESET)
+    return "".join(piezas)
+
+
+def titulo(texto):
+    """Imprime un titulo de seccion en neon."""
+    print(f"\n{neon(texto)}{RESET}")
 
 
 def clear_screen():
@@ -47,7 +69,7 @@ def banner(subtitulo=""):
         print(linea)
     print(f"{SEP}{RESET}")
     if subtitulo:
-        print(f"{CYAN}{BOLD}{subtitulo.center(ANCHO)}{RESET}")
+        print(f"{neon(subtitulo.center(ANCHO))}")
         print(f"{RED}{BOLD}{SEP}{RESET}")
     print()
 
@@ -59,7 +81,8 @@ def pantalla(subtitulo=""):
 
 def pedir(texto, obligatorio=True, defecto=None, permitir_salir=True):
     while True:
-        valor = input(f"{GREEN}-> {texto}: {RESET}").strip()
+        prompt = f"{neon('-> ')}{neon(texto)}{neon(': ')}"
+        valor = input(prompt).strip()
         if permitir_salir and valor.lower() in SALIR_PEDIR:
             print(f"{RED}[-] Volviendo al panel...{RESET}")
             sys.exit(0)
@@ -72,7 +95,8 @@ def pedir(texto, obligatorio=True, defecto=None, permitir_salir=True):
 
 def pedir_int(texto, defecto=None, permitir_salir=True):
     while True:
-        valor = input(f"{GREEN}-> {texto}: {RESET}").strip()
+        prompt = f"{neon('-> ')}{neon(texto)}{neon(': ')}"
+        valor = input(prompt).strip()
         if permitir_salir and valor.lower() in SALIR_PEDIR:
             print(f"{RED}[-] Volviendo al panel...{RESET}")
             sys.exit(0)
@@ -112,10 +136,7 @@ async def escuchar_salida(bot):
 
 
 def instalar_salida(bot):
-    """
-    Registra los comandos .salir / .exit y arranca el escucha de consola.
-    Se llama una sola vez desde on_ready.
-    """
+    """Registra .salir / .exit y arranca el escucha de consola (una sola vez)."""
     from discord.ext import commands
 
     if getattr(bot, "_salida_instalada", False):
@@ -133,3 +154,56 @@ def instalar_salida(bot):
 
     bot._salida_instalada = True
     asyncio.create_task(escuchar_salida(bot))
+
+
+# ---------------------------------------------------------------------------
+#  UTILIDADES DE ENVIO
+# ---------------------------------------------------------------------------
+
+async def enviar_dm(destino, texto, reintentos=3):
+    """
+    Envia un DM con reintentos ante rate limit.
+    Devuelve True si se entrego, False si el usuario tiene los DMs cerrados
+    o hubo un error definitivo.
+    """
+    for intento in range(reintentos):
+        try:
+            await destino.send(texto)
+            return True
+        except discord.errors.Forbidden:
+            return False
+        except discord.errors.HTTPException as e:
+            if e.status == 429:
+                espera = float(getattr(e, "retry_after", 2)) + 0.5
+                await asyncio.sleep(espera)
+                continue
+            return False
+        except Exception:
+            await asyncio.sleep(1)
+    return False
+
+
+async def obtener_miembros(guild, incluir_bots=False):
+    """
+    Devuelve la lista de miembros del servidor.
+    Primero por HTTP (fetch_members), y si falla, desde la cache tras chunk().
+    """
+    miembros = []
+
+    # 1) Via HTTP: la forma confiable, no depende de la cache
+    try:
+        async for m in guild.fetch_members(limit=None):
+            if incluir_bots or not m.bot:
+                miembros.append(m)
+        if miembros:
+            return miembros
+    except Exception:
+        pass
+
+    # 2) Fallback: cache local
+    try:
+        await guild.chunk()
+    except Exception:
+        pass
+
+    return [m for m in guild.members if incluir_bots or not m.bot]
