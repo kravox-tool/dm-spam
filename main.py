@@ -130,7 +130,7 @@ def pantalla_info():
 
  {ROJO}{BOLD}SALIR DESDE ADENTRO DE UNA FUNCION{RESET}
    {ROJO_OSCURO}-{RESET} Escribe 'salir' en la consola para volver al panel
-   {ROJO_OSCURO}-{RESET} En Discord usa .salir o .exit (solo el dueno)
+   {ROJO_OSCURO}-{RESET} En Discord usa .salir o .exit
 """)
     pausa()
 
