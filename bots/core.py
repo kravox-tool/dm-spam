@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Nucleo compartido del panel DM-SPAM.
-Colores ANSI, banner, salida limpia al panel, prompts neon y utilidades.
+Colores ANSI fuego, banner, salida limpia al panel, prompts y utilidades.
 """
 
 import asyncio
@@ -34,8 +34,15 @@ BANNER_LINES = [
     "╚═════╝ ╚═╝     ╚═╝      ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝",
 ]
 
-# Paleta neon para textos de pregunta (multicolor)
-NEON = [RED, MAGENTA, YELLOW, GREEN, CYAN, BLUE]
+# ---------- Paleta FUEGO (rojo -> naranja -> ambar) ----------
+FUEGO = [
+    "\033[1;38;5;196m",   # rojo fuego
+    "\033[1;38;5;202m",   # rojo naranja
+    "\033[1;38;5;208m",   # naranja
+    "\033[1;38;5;214m",   # naranja ambar
+]
+ROJO    = FUEGO[0]
+NARANJA = FUEGO[2]
 
 # Palabras que devuelven al panel
 SALIR_TOKENS = {"salir", "exit", "quit", "0", "/salir", "q", "volver"}
@@ -43,19 +50,19 @@ SALIR_PEDIR = {"salir", "exit", "volver"}
 
 
 def neon(texto):
-    """Pinta el texto caracter por caracter con la paleta neon."""
+    """Pinta el texto caracter por caracter con la paleta fuego."""
     if not texto:
         return ""
     piezas = []
     for i, ch in enumerate(texto):
-        piezas.append(NEON[i % len(NEON)])
+        piezas.append(FUEGO[i % len(FUEGO)])
         piezas.append(ch)
     piezas.append(RESET)
     return "".join(piezas)
 
 
 def titulo(texto):
-    """Imprime un titulo de seccion en neon."""
+    """Imprime un titulo de seccion en fuego."""
     print(f"\n{neon(texto)}{RESET}")
 
 
@@ -64,13 +71,13 @@ def clear_screen():
 
 
 def banner(subtitulo=""):
-    print(f"{RED}{BOLD}")
-    for linea in BANNER_LINES:
-        print(linea)
-    print(f"{SEP}{RESET}")
+    print(BOLD)
+    for i, linea in enumerate(BANNER_LINES):
+        print(f"{FUEGO[i % len(FUEGO)]}{linea}")
+    print(f"{ROJO}{BOLD}{SEP}{RESET}")
     if subtitulo:
-        print(f"{neon(subtitulo.center(ANCHO))}")
-        print(f"{RED}{BOLD}{SEP}{RESET}")
+        print(neon(subtitulo.center(ANCHO)))
+        print(f"{ROJO}{BOLD}{SEP}{RESET}")
     print()
 
 
@@ -84,13 +91,13 @@ def pedir(texto, obligatorio=True, defecto=None, permitir_salir=True):
         prompt = f"{neon('-> ')}{neon(texto)}{neon(': ')}"
         valor = input(prompt).strip()
         if permitir_salir and valor.lower() in SALIR_PEDIR:
-            print(f"{RED}[-] Volviendo al panel...{RESET}")
+            print(f"{ROJO}[-] Volviendo al panel...{RESET}")
             sys.exit(0)
         if valor:
             return valor
         if not obligatorio:
             return defecto
-        print(f"{RED}[X] Este campo es obligatorio.{RESET}")
+        print(f"{ROJO}[X] Este campo es obligatorio.{RESET}")
 
 
 def pedir_int(texto, defecto=None, permitir_salir=True):
@@ -98,22 +105,22 @@ def pedir_int(texto, defecto=None, permitir_salir=True):
         prompt = f"{neon('-> ')}{neon(texto)}{neon(': ')}"
         valor = input(prompt).strip()
         if permitir_salir and valor.lower() in SALIR_PEDIR:
-            print(f"{RED}[-] Volviendo al panel...{RESET}")
+            print(f"{ROJO}[-] Volviendo al panel...{RESET}")
             sys.exit(0)
         if not valor:
             if defecto is not None:
                 return defecto
-            print(f"{YELLOW}[!] Campo obligatorio.{RESET}")
+            print(f"{NARANJA}[!] Campo obligatorio.{RESET}")
             continue
         try:
             return int(valor)
         except ValueError:
-            print(f"{YELLOW}[!] Debe ser un numero entero.{RESET}")
+            print(f"{NARANJA}[!] Debe ser un numero entero.{RESET}")
 
 
 async def salir(bot):
     """Cierra el bot y devuelve el control al panel."""
-    print(f"\n{RED}{BOLD}[-] Volviendo al panel...{RESET}")
+    print(f"\n{ROJO}{BOLD}[-] Volviendo al panel...{RESET}")
     try:
         await bot.close()
     except Exception:
@@ -161,11 +168,7 @@ def instalar_salida(bot):
 # ---------------------------------------------------------------------------
 
 async def enviar_dm(destino, texto, reintentos=3):
-    """
-    Envia un DM con reintentos ante rate limit.
-    Devuelve True si se entrego, False si el usuario tiene los DMs cerrados
-    o hubo un error definitivo.
-    """
+    """Envia un DM con reintentos ante rate limit."""
     for intento in range(reintentos):
         try:
             await destino.send(texto)
@@ -184,13 +187,8 @@ async def enviar_dm(destino, texto, reintentos=3):
 
 
 async def obtener_miembros(guild, incluir_bots=False):
-    """
-    Devuelve la lista de miembros del servidor.
-    Primero por HTTP (fetch_members), y si falla, desde la cache tras chunk().
-    """
+    """Miembros del servidor por HTTP y, si falla, desde la cache."""
     miembros = []
-
-    # 1) Via HTTP: la forma confiable, no depende de la cache
     try:
         async for m in guild.fetch_members(limit=None):
             if incluir_bots or not m.bot:
@@ -200,7 +198,6 @@ async def obtener_miembros(guild, incluir_bots=False):
     except Exception:
         pass
 
-    # 2) Fallback: cache local
     try:
         await guild.chunk()
     except Exception:
