@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 DM-SPAM :: Termux Panel
-Lanzador principal con interfaz neon roja y prompts multicolor.
+Lanzador principal con interfaz fuego (rojo/naranja neon).
 """
 
 import os
@@ -22,7 +22,15 @@ GRAY    = "\033[0;90m"
 BOLD    = "\033[1m"
 RESET   = "\033[0m"
 
-NEON = [RED, MAGENTA, YELLOW, GREEN, CYAN, BLUE]
+# ---------- Paleta FUEGO ----------
+FUEGO = [
+    "\033[1;38;5;196m",
+    "\033[1;38;5;202m",
+    "\033[1;38;5;208m",
+    "\033[1;38;5;214m",
+]
+ROJO    = FUEGO[0]
+NARANJA = FUEGO[2]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BOTS_DIR = os.path.join(BASE_DIR, "bots")
@@ -39,12 +47,12 @@ BANNER_LINES = [
 
 
 def neon(texto):
-    """Pinta el texto caracter por caracter con la paleta neon."""
+    """Pinta el texto caracter por caracter con la paleta fuego."""
     if not texto:
         return ""
     piezas = []
     for i, ch in enumerate(texto):
-        piezas.append(NEON[i % len(NEON)])
+        piezas.append(FUEGO[i % len(FUEGO)])
         piezas.append(ch)
     piezas.append(RESET)
     return "".join(piezas)
@@ -55,17 +63,17 @@ def limpiar():
 
 
 def banner():
-    print(f"{RED}{BOLD}")
-    for linea in BANNER_LINES:
-        print(linea)
-    print(f"{RESET}")
+    print(BOLD)
+    for i, linea in enumerate(BANNER_LINES):
+        print(f"{FUEGO[i % len(FUEGO)]}{linea}")
+    print(RESET)
 
 
 def barra(texto=""):
-    print(f"{RED}{BOLD}" + "=" * ANCHO + f"{RESET}")
+    print(f"{ROJO}{BOLD}" + "=" * ANCHO + f"{RESET}")
     if texto:
         print(neon(texto.center(ANCHO)))
-        print(f"{RED}{BOLD}" + "=" * ANCHO + f"{RESET}")
+        print(f"{ROJO}{BOLD}" + "=" * ANCHO + f"{RESET}")
 
 
 def encabezado():
@@ -80,19 +88,19 @@ def pausa():
 
 
 def menu():
-    print(f" {RED}{BOLD}[1]{RESET}  {WHITE}{BOLD}DM-SPAM{RESET}   {GRAY}rafaga de mensajes directos a una ID{RESET}")
-    print(f" {RED}{BOLD}[2]{RESET}  {WHITE}{BOLD}CHAT{RESET}      {GRAY}chat en vivo por consola con una ID{RESET}")
-    print(f" {RED}{BOLD}[3]{RESET}  {WHITE}{BOLD}MASIVO{RESET}    {GRAY}mensaje x veces a todos los usuarios del servidor{RESET}")
-    print(f" {RED}{BOLD}[4]{RESET}  {WHITE}{BOLD}FLASH{RESET}     {GRAY}enviar a usuario o servidor y borrar rapido{RESET}")
-    print(f" {RED}{BOLD}[5]{RESET}  {WHITE}{BOLD}INFO{RESET}      {GRAY}requisitos, token e intents necesarios{RESET}")
-    print(f" {RED}{BOLD}[0]{RESET}  {WHITE}{BOLD}SALIR{RESET}     {GRAY}cerrar el lanzador{RESET}")
+    print(f" {ROJO}{BOLD}[1]{RESET}  {WHITE}{BOLD}DM-SPAM{RESET}   {GRAY}rafaga de mensajes directos a una ID{RESET}")
+    print(f" {ROJO}{BOLD}[2]{RESET}  {WHITE}{BOLD}CHAT{RESET}      {GRAY}chat en vivo por consola con una ID{RESET}")
+    print(f" {ROJO}{BOLD}[3]{RESET}  {WHITE}{BOLD}MASIVO{RESET}    {GRAY}mensaje x veces a todos los usuarios del servidor{RESET}")
+    print(f" {ROJO}{BOLD}[4]{RESET}  {WHITE}{BOLD}FLASH{RESET}     {GRAY}enviar a usuario o servidor y borrar rapido{RESET}")
+    print(f" {ROJO}{BOLD}[5]{RESET}  {WHITE}{BOLD}INFO{RESET}      {GRAY}requisitos, token e intents necesarios{RESET}")
+    print(f" {ROJO}{BOLD}[0]{RESET}  {WHITE}{BOLD}SALIR{RESET}     {GRAY}cerrar el lanzador{RESET}")
     print()
 
 
 def lanzar_script(nombre):
     ruta = os.path.join(BOTS_DIR, nombre)
     if not os.path.isfile(ruta):
-        print(f"\n{RED}[X] Script no encontrado: {ruta}{RESET}")
+        print(f"\n{ROJO}[X] Script no encontrado: {ruta}{RESET}")
         pausa()
         return
     try:
@@ -120,7 +128,7 @@ def pantalla_info():
    {GRAY}-{RESET} prompt_toolkit >= 3.0.43
 
  {WHITE}{BOLD}INSTALACION{RESET}
-   {GREEN}bash setup.sh{RESET}
+   {NARANJA}bash setup.sh{RESET}
 
  {WHITE}{BOLD}COMO OBTENER EL TOKEN{RESET}
    {GRAY}-{RESET} Entra a https://discord.com/developers/applications
@@ -162,10 +170,10 @@ def main():
             limpiar()
             banner()
             barra()
-            print(f"\n{GREEN}[-] Saliendo del panel...{RESET}\n")
+            print(f"\n{NARANJA}[-] Saliendo del panel...{RESET}\n")
             break
         else:
-            print(f"\n{YELLOW}[!] Opcion invalida. Usa 1, 2, 3, 4, 5 o 0.{RESET}")
+            print(f"\n{NARANJA}[!] Opcion invalida. Usa 1, 2, 3, 4, 5 o 0.{RESET}")
             time.sleep(1.2)
 
 
@@ -173,4 +181,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(f"\n{RED}[-] Panel cerrado por el usuario.{RESET}")
+        print(f"\n{ROJO}[-] Panel cerrado por el usuario.{RESET}")
