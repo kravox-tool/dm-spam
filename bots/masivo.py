@@ -30,20 +30,36 @@ bot._lanzado = False
 
 
 async def lanzar_masivo():
+    # --- Resolver servidor ---
+    guild = None
     try:
-        guild = bot.get_guild(bot.guild_id) or await bot.fetch_guild(bot.guild_id)
+        guild = bot.get_guild(bot.guild_id)
+        if guild is None:
+            guild = await bot.fetch_guild(bot.guild_id)
     except Exception:
         print(f"\n{core.RED}{core.BOLD}[X] No se encontro el servidor con esa ID.{core.RESET}")
-        await asyncio.sleep(3)
+        print(f"{core.GRAY}[i] Verifica que la ID sea la del servidor y que el bot este dentro.{core.RESET}")
+        await asyncio.sleep(4)
         await core.salir(bot)
         return
 
-    try:
-        await guild.chunk()
-    except Exception:
-        pass
+    print(f"\n{core.YELLOW}[*] Servidor: {guild.name} ({guild.id}){core.RESET}")
+    print(f"{core.YELLOW}[*] Obteniendo miembros...{core.RESET}")
 
-    miembros = [m for m in guild.members if (bot.incluir_bots or not m.bot) and m.id != bot.user.id]
+    try:
+        miembros = await core.obtener_miembros(guild, incluir_bots=bot.incluir_bots)
+    except Exception as e:
+        print(f"\n{core.RED}[X] Error obteniendo miembros: {e}{core.RESET}")
+        miembros = []
+
+    miembros = [m for m in miembros if m.id != bot.user.id]
+
+    if not miembros:
+        print(f"\n{core.RED}{core.BOLD}[X] La lista de miembros vino vacia.{core.RESET}")
+        print(f"{core.GRAY}[i] Revisa que el intent 'Server Members' este activado en el portal.{core.RESET}")
+        await asyncio.sleep(4)
+        await core.salir(bot)
+        return
 
     print(f"\n{core.RED}{core.BOLD}{core.SEP}")
     print(f"[>] SERVIDOR: {guild.name.upper()} ({guild.id})")
@@ -56,24 +72,21 @@ async def lanzar_masivo():
     for i, miembro in enumerate(miembros, 1):
         entrego = True
         for _ in range(bot.veces):
-            try:
-                await miembro.send(bot.mensaje_ataque)
+            if await core.enviar_dm(miembro, bot.mensaje_ataque):
                 enviados += 1
-            except discord.errors.Forbidden:
+            else:
                 entrego = False
                 break
-            except Exception:
-                pass
 
         if entrego:
             ok += 1
             estado = f"{core.GREEN}OK{core.RESET}"
         else:
             fallidos += 1
-            estado = f"{core.YELLOW}DMs cerrados{core.RESET}"
+            estado = f"{core.YELLOW}DMs cerrados{RESET}"
 
         print(f"{core.GREEN}[+] [{i}/{len(miembros)}] {miembro.name} -> {estado}")
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.35)
 
     print(f"\n{core.GREEN}{core.BOLD}{core.SEP}")
     print(f"[OK] FINALIZADO | Alcanzados: {ok} | Fallidos: {fallidos} | Mensajes: {enviados}")
@@ -97,20 +110,20 @@ async def on_ready():
 def main():
     core.pantalla("MASIVO :: TODO EL SERVIDOR")
 
-    print(f"{core.BLUE}{core.BOLD}[ CONFIGURACION DE CONEXION ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DE CONEXION ]")
     token = core.pedir("Coloca el token del bot")
 
-    print(f"\n{core.BLUE}{core.BOLD}[ CONFIGURACION DEL SERVIDOR ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DEL SERVIDOR ]")
     bot.guild_id = core.pedir_int("Coloca la ID del servidor")
 
-    print(f"\n{core.BLUE}{core.BOLD}[ CONFIGURACION DEL MENSAJE ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DEL MENSAJE ]")
     bot.mensaje_ataque = core.pedir("Escribe tu mensaje personalizado", permitir_salir=False)
 
-    print(f"\n{core.BLUE}{core.BOLD}[ CONFIGURACION DE CANTIDAD ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DE CANTIDAD ]")
     bot.veces = core.pedir_int("Cuantos mensajes por usuario? (ENTER = 1)", defecto=1)
 
-    print(f"\n{core.BLUE}{core.BOLD}[ OPCIONES ]{core.RESET}")
-    inc = input(f"{core.GREEN}-> Incluir bots tambien? (s/N): {core.RESET}").strip().lower()
+    core.titulo("[ OPCIONES ]")
+    inc = input(f"{core.neon('-> ')}{core.neon('Incluir bots tambien? (s/N)')}{core.neon(': ')}").strip().lower()
     bot.incluir_bots = inc == "s"
 
     print(f"\n{core.YELLOW}{core.BOLD}{core.SEP}")
