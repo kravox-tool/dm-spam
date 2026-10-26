@@ -7,6 +7,7 @@ Lanzador principal con interfaz neon roja.
 
 import os
 import sys
+import time
 import subprocess
 
 # ---------- Paleta ANSI ----------
@@ -23,6 +24,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BOTS_DIR = os.path.join(BASE_DIR, "bots")
 ANCHO = 66
 
+BANNER_LINES = [
+    "██████╗ ███╗   ███╗      ███████╗██████╗  █████╗ ███╗   ███╗",
+    "██╔══██╗████╗ ████║      ██╔════╝██╔══██╗██╔══██╗████╗ ████║",
+    "██║  ██║██╔████╔██║█████╗███████╗██████╔╝███████║██╔████╔██║",
+    "██║  ██║██║╚██╔╝██║╚════╝╚════██║██╔═══╝ ██╔══██║██║╚██╔╝██║",
+    "██████╔╝██║ ╚═╝ ██║      ███████║██║     ██║  ██║██║ ╚═╝ ██║",
+    "╚═════╝ ╚═╝     ╚═╝      ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝",
+]
+
 
 def limpiar():
     os.system("clear")
@@ -30,12 +40,8 @@ def limpiar():
 
 def banner():
     print(f"{RED}{BOLD}")
-    print("██████╗ ███╗   ███╗      ███████╗██████╗  █████╗ ███╗   ███╗")
-    print("██╔══██╗████╗ ████║      ██╔════╝██╔══██╗██╔══██╗████╗ ████║")
-    print("██║  ██║██╔████╔██║█████╗███████╗██████╔╝███████║██╔████╔██║")
-    print("██║  ██║██║╚██╔╝██║╚════╝╚════██║██╔═══╝ ██╔══██║██║╚██╔╝██║")
-    print("██████╔╝██║ ╚═╝ ██║      ███████║██║     ██║  ██║██║ ╚═╝ ██║")
-    print("╚═════╝ ╚═╝     ╚═╝      ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝")
+    for linea in BANNER_LINES:
+        print(linea)
     print(f"{RESET}")
 
 
@@ -58,9 +64,11 @@ def pausa():
 
 
 def menu():
-    print(f" {RED}{BOLD}[1]{RESET}  {WHITE}{BOLD}DM-SPAM{RESET}   {GRAY}rafaga masiva de mensajes directos a una ID{RESET}")
+    print(f" {RED}{BOLD}[1]{RESET}  {WHITE}{BOLD}DM-SPAM{RESET}   {GRAY}rafaga de mensajes directos a una ID{RESET}")
     print(f" {RED}{BOLD}[2]{RESET}  {WHITE}{BOLD}CHAT{RESET}      {GRAY}chat en vivo por consola con una ID{RESET}")
-    print(f" {RED}{BOLD}[3]{RESET}  {WHITE}{BOLD}INFO{RESET}      {GRAY}requisitos, token e intents necesarios{RESET}")
+    print(f" {RED}{BOLD}[3]{RESET}  {WHITE}{BOLD}MASIVO{RESET}    {GRAY}mensaje x veces a todos los usuarios del servidor{RESET}")
+    print(f" {RED}{BOLD}[4]{RESET}  {WHITE}{BOLD}FLASH{RESET}     {GRAY}enviar a usuario o servidor y borrar rapido{RESET}")
+    print(f" {RED}{BOLD}[5]{RESET}  {WHITE}{BOLD}INFO{RESET}      {GRAY}requisitos, token e intents necesarios{RESET}")
     print(f" {RED}{BOLD}[0]{RESET}  {WHITE}{BOLD}SALIR{RESET}     {GRAY}cerrar el lanzador{RESET}")
     print()
 
@@ -83,6 +91,12 @@ def pantalla_info():
     banner()
     barra("INFORMACION / REQUISITOS")
     print(f"""
+ {WHITE}{BOLD}FUNCIONES DEL PANEL{RESET}
+   {GRAY}-{RESET} DM-SPAM  rafaga de DMs a una ID
+   {GRAY}-{RESET} CHAT     chat en vivo por consola con una ID
+   {GRAY}-{RESET} MASIVO   mensaje x veces a todos los usuarios de un servidor
+   {GRAY}-{RESET} FLASH    enviar a un usuario o servidor y borrar rapido
+
  {WHITE}{BOLD}REQUISITOS{RESET}
    {GRAY}-{RESET} Termux actualizado
    {GRAY}-{RESET} Python 3.10 o superior
@@ -104,6 +118,10 @@ def pantalla_info():
  {WHITE}{BOLD}COMO OBTENER UNA ID{RESET}
    {GRAY}-{RESET} Ajustes de Discord > Avanzado > Modo desarrollador
    {GRAY}-{RESET} Clic derecho sobre el usuario > Copiar ID
+
+ {WHITE}{BOLD}SALIR DESDE ADENTRO DE UNA FUNCION{RESET}
+   {GRAY}-{RESET} Escribe 'salir' en la consola para volver al panel
+   {GRAY}-{RESET} En Discord usa .salir o .exit (solo el dueno)
 """)
     pausa()
 
@@ -119,6 +137,10 @@ def main():
         elif opcion == "2":
             lanzar_script("chat.py")
         elif opcion == "3":
+            lanzar_script("masivo.py")
+        elif opcion == "4":
+            lanzar_script("flash.py")
+        elif opcion == "5":
             pantalla_info()
         elif opcion == "0":
             limpiar()
@@ -127,8 +149,7 @@ def main():
             print(f"\n{GREEN}[-] Saliendo del panel...{RESET}\n")
             break
         else:
-            print(f"\n{YELLOW}[!] Opcion invalida. Usa 1, 2, 3 o 0.{RESET}")
-            import time
+            print(f"\n{YELLOW}[!] Opcion invalida. Usa 1, 2, 3, 4, 5 o 0.{RESET}")
             time.sleep(1.2)
 
 
