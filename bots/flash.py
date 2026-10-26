@@ -36,6 +36,10 @@ async def enviar_y_borrar(destino, texto, delay):
         msg = await destino.send(texto)
     except discord.errors.Forbidden:
         return False
+    except discord.errors.HTTPException as e:
+        if e.status == 429:
+            await asyncio.sleep(float(getattr(e, "retry_after", 2)) + 0.5)
+        return False
     except Exception:
         return False
 
@@ -55,27 +59,38 @@ async def lanzar_flash():
             objetivo = await bot.fetch_user(bot.target_id)
         except Exception:
             print(f"\n{core.RED}{core.BOLD}[X] ID de usuario invalida.{core.RESET}")
-            await asyncio.sleep(3)
+            await asyncio.sleep(4)
             await core.salir(bot)
             return
         objetivos = [objetivo]
     else:
+        guild = None
         try:
-            guild = bot.get_guild(bot.target_id) or await bot.fetch_guild(bot.target_id)
+            guild = bot.get_guild(bot.target_id)
+            if guild is None:
+                guild = await bot.fetch_guild(bot.target_id)
         except Exception:
             print(f"\n{core.RED}{core.BOLD}[X] ID de servidor invalida.{core.RESET}")
-            await asyncio.sleep(3)
+            print(f"{core.GRAY}[i] Verifica que la ID sea la del servidor y que el bot este dentro.{core.RESET}")
+            await asyncio.sleep(4)
             await core.salir(bot)
             return
+
+        print(f"\n{core.YELLOW}[*] Servidor: {guild.name} ({guild.id}){core.RESET}")
+        print(f"{core.YELLOW}[*] Obteniendo miembros...{core.RESET}")
+
         try:
-            await guild.chunk()
-        except Exception:
-            pass
-        objetivos = [m for m in guild.members if not m.bot and m.id != bot.user.id]
+            objetivos = await core.obtener_miembros(guild, incluir_bots=False)
+        except Exception as e:
+            print(f"\n{core.RED}[X] Error obteniendo miembros: {e}{core.RESET}")
+            objetivos = []
+
+        objetivos = [m for m in objetivos if m.id != bot.user.id]
 
     if not objetivos:
-        print(f"\n{core.YELLOW}[!] No hay objetivos disponibles.{core.RESET}")
-        await asyncio.sleep(3)
+        print(f"\n{core.RED}{core.BOLD}[X] No hay objetivos disponibles.{core.RESET}")
+        print(f"{core.GRAY}[i] Revisa que el intent 'Server Members' este activado en el portal.{core.RESET}")
+        await asyncio.sleep(4)
         await core.salir(bot)
         return
 
@@ -87,11 +102,13 @@ async def lanzar_flash():
 
     total = 0
     for i, objetivo in enumerate(objetivos, 1):
+        enviados_obj = 0
         for _ in range(bot.cantidad_mensajes):
             if await enviar_y_borrar(objetivo, bot.mensaje_ataque, bot.delay_borrado):
                 total += 1
+                enviados_obj += 1
         print(f"{core.GREEN}[+] [{i}/{len(objetivos)}] {objetivo.name} -> "
-              f"{bot.cantidad_mensajes} flash{core.RESET}")
+              f"{enviados_obj} flash{core.RESET}")
         await asyncio.sleep(0.3)
 
     print(f"\n{core.GREEN}{core.BOLD}{core.SEP}")
@@ -116,13 +133,13 @@ async def on_ready():
 def main():
     core.pantalla("FLASH :: ENVIAR Y BORRAR")
 
-    print(f"{core.BLUE}{core.BOLD}[ CONFIGURACION DE CONEXION ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DE CONEXION ]")
     token = core.pedir("Coloca el token del bot")
 
-    print(f"\n{core.BLUE}{core.BOLD}[ DESTINO ]{core.RESET}")
+    core.titulo("[ DESTINO ]")
     print(f" {core.WHITE}[1]{core.RESET} Un usuario (por ID)")
     print(f" {core.WHITE}[2]{core.RESET} Todos los usuarios de un servidor (por ID)")
-    opcion = input(f"{core.GREEN}-> Elige 1 o 2: {core.RESET}").strip()
+    opcion = input(f"{core.neon('-> ')}{core.neon('Elige 1 o 2')}{core.neon(': ')}").strip()
     bot.modo = "usuario" if opcion != "2" else "servidor"
 
     if bot.modo == "usuario":
@@ -130,13 +147,13 @@ def main():
     else:
         bot.target_id = core.pedir_int("ID del servidor destino")
 
-    print(f"\n{core.BLUE}{core.BOLD}[ CONFIGURACION DEL MENSAJE ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DEL MENSAJE ]")
     bot.mensaje_ataque = core.pedir("Escribe tu mensaje", permitir_salir=False)
 
-    print(f"\n{core.BLUE}{core.BOLD}[ CONFIGURACION DE CANTIDAD ]{core.RESET}")
+    core.titulo("[ CONFIGURACION DE CANTIDAD ]")
     bot.cantidad_mensajes = core.pedir_int("Cuantos mensajes enviar? (ENTER = 1)", defecto=1)
 
-    print(f"\n{core.BLUE}{core.BOLD}[ TIEMPO DE BORRADO ]{core.RESET}")
+    core.titulo("[ TIEMPO DE BORRADO ]")
     seg = core.pedir_int("Segundos antes de borrar (0 = inmediato)", defecto=0)
     bot.delay_borrado = float(seg)
 
