@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Nucleo compartido del panel DM-SPAM.
-Colores ANSI fuego, banner, salida limpia al panel, prompts y utilidades.
+Todo en rojo neon: banner, prompts, salida al panel y utilidades.
 """
 
 import asyncio
@@ -11,16 +11,21 @@ import sys
 
 import discord
 
-RED     = "\033[1;31m"
-GREEN   = "\033[1;32m"
-YELLOW  = "\033[1;33m"
-BLUE    = "\033[1;34m"
-MAGENTA = "\033[1;35m"
-CYAN    = "\033[1;36m"
-WHITE   = "\033[1;37m"
-GRAY    = "\033[0;90m"
+# ---------- Paleta ROJA ----------
+RED     = "\033[1;38;5;196m"   # rojo neon
+GREEN   = "\033[38;5;203m"     # rojo claro
+YELLOW  = "\033[38;5;160m"     # rojo oscuro
+BLUE    = "\033[1;38;5;196m"
+MAGENTA = "\033[38;5;203m"
+CYAN    = "\033[1;38;5;196m"
+WHITE   = "\033[1;38;5;196m"
+GRAY    = "\033[38;5;160m"
 BOLD    = "\033[1m"
 RESET   = "\033[0m"
+
+ROJO       = "\033[1;38;5;196m"
+ROJO_CLARO = "\033[38;5;203m"
+ROJO_OSCURO = "\033[38;5;160m"
 
 ANCHO = 66
 SEP = "=" * ANCHO
@@ -34,36 +39,19 @@ BANNER_LINES = [
     "╚═════╝ ╚═╝     ╚═╝      ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝",
 ]
 
-# ---------- Paleta FUEGO (rojo -> naranja -> ambar) ----------
-FUEGO = [
-    "\033[1;38;5;196m",   # rojo fuego
-    "\033[1;38;5;202m",   # rojo naranja
-    "\033[1;38;5;208m",   # naranja
-    "\033[1;38;5;214m",   # naranja ambar
-]
-ROJO    = FUEGO[0]
-NARANJA = FUEGO[2]
-
-# Palabras que devuelven al panel
 SALIR_TOKENS = {"salir", "exit", "quit", "0", "/salir", "q", "volver"}
 SALIR_PEDIR = {"salir", "exit", "volver"}
 
 
 def neon(texto):
-    """Pinta el texto caracter por caracter con la paleta fuego."""
+    """Todo el texto en rojo neon."""
     if not texto:
         return ""
-    piezas = []
-    for i, ch in enumerate(texto):
-        piezas.append(FUEGO[i % len(FUEGO)])
-        piezas.append(ch)
-    piezas.append(RESET)
-    return "".join(piezas)
+    return f"{ROJO}{texto}{RESET}"
 
 
 def titulo(texto):
-    """Imprime un titulo de seccion en fuego."""
-    print(f"\n{neon(texto)}{RESET}")
+    print(f"\n{ROJO}{BOLD}{texto}{RESET}")
 
 
 def clear_screen():
@@ -71,12 +59,12 @@ def clear_screen():
 
 
 def banner(subtitulo=""):
-    print(BOLD)
-    for i, linea in enumerate(BANNER_LINES):
-        print(f"{FUEGO[i % len(FUEGO)]}{linea}")
-    print(f"{ROJO}{BOLD}{SEP}{RESET}")
+    print(f"{ROJO}{BOLD}")
+    for linea in BANNER_LINES:
+        print(linea)
+    print(f"{SEP}{RESET}")
     if subtitulo:
-        print(neon(subtitulo.center(ANCHO)))
+        print(f"{ROJO_CLARO}{BOLD}{subtitulo.center(ANCHO)}{RESET}")
         print(f"{ROJO}{BOLD}{SEP}{RESET}")
     print()
 
@@ -88,7 +76,7 @@ def pantalla(subtitulo=""):
 
 def pedir(texto, obligatorio=True, defecto=None, permitir_salir=True):
     while True:
-        prompt = f"{neon('-> ')}{neon(texto)}{neon(': ')}"
+        prompt = f"{ROJO}{BOLD}-> {texto}: {RESET}"
         valor = input(prompt).strip()
         if permitir_salir and valor.lower() in SALIR_PEDIR:
             print(f"{ROJO}[-] Volviendo al panel...{RESET}")
@@ -102,7 +90,7 @@ def pedir(texto, obligatorio=True, defecto=None, permitir_salir=True):
 
 def pedir_int(texto, defecto=None, permitir_salir=True):
     while True:
-        prompt = f"{neon('-> ')}{neon(texto)}{neon(': ')}"
+        prompt = f"{ROJO}{BOLD}-> {texto}: {RESET}"
         valor = input(prompt).strip()
         if permitir_salir and valor.lower() in SALIR_PEDIR:
             print(f"{ROJO}[-] Volviendo al panel...{RESET}")
@@ -110,16 +98,15 @@ def pedir_int(texto, defecto=None, permitir_salir=True):
         if not valor:
             if defecto is not None:
                 return defecto
-            print(f"{NARANJA}[!] Campo obligatorio.{RESET}")
+            print(f"{ROJO_CLARO}[!] Campo obligatorio.{RESET}")
             continue
         try:
             return int(valor)
         except ValueError:
-            print(f"{NARANJA}[!] Debe ser un numero entero.{RESET}")
+            print(f"{ROJO_CLARO}[!] Debe ser un numero entero.{RESET}")
 
 
 async def salir(bot):
-    """Cierra el bot y devuelve el control al panel."""
     print(f"\n{ROJO}{BOLD}[-] Volviendo al panel...{RESET}")
     try:
         await bot.close()
@@ -130,7 +117,6 @@ async def salir(bot):
 
 
 async def escuchar_salida(bot):
-    """Escucha la consola: escribe 'salir' para volver al panel."""
     while True:
         try:
             linea = await asyncio.to_thread(input)
@@ -143,7 +129,6 @@ async def escuchar_salida(bot):
 
 
 def instalar_salida(bot):
-    """Registra .salir / .exit y arranca el escucha de consola (una sola vez)."""
     from discord.ext import commands
 
     if getattr(bot, "_salida_instalada", False):
@@ -168,7 +153,6 @@ def instalar_salida(bot):
 # ---------------------------------------------------------------------------
 
 async def enviar_dm(destino, texto, reintentos=3):
-    """Envia un DM con reintentos ante rate limit."""
     for intento in range(reintentos):
         try:
             await destino.send(texto)
@@ -177,8 +161,7 @@ async def enviar_dm(destino, texto, reintentos=3):
             return False
         except discord.errors.HTTPException as e:
             if e.status == 429:
-                espera = float(getattr(e, "retry_after", 2)) + 0.5
-                await asyncio.sleep(espera)
+                await asyncio.sleep(float(getattr(e, "retry_after", 2)) + 0.5)
                 continue
             return False
         except Exception:
@@ -187,7 +170,6 @@ async def enviar_dm(destino, texto, reintentos=3):
 
 
 async def obtener_miembros(guild, incluir_bots=False):
-    """Miembros del servidor por HTTP y, si falla, desde la cache."""
     miembros = []
     try:
         async for m in guild.fetch_members(limit=None):
